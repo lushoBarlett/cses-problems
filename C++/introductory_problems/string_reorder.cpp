@@ -4,57 +4,65 @@ using namespace std;
 
 constexpr int MAXN = 1000000;
 
-struct Occurrence {
-	int n;
-	char c;
+size_t chars[26];
 
-	const bool operator<(Occurrence other) const {
-		return n < other.n || (n == other.n && c < other.c);
-	}
-};
+pair<char, size_t> calculate_densest() {
+	char c = 0;
+	size_t max = 0;
+	for (int i = 0; i < 26; i++)
+		if (chars[i] > max) {
+			c = i + 'A';
+			max = chars[i];
+		}
+	return {c, max};
+}
+
+pair<char, char> calculate_two_smallest() {
+	pair<char, char> cs = {0,0};
+	for (int i = 0; i < 26; i++)
+		if (chars[i] > 0 && !cs.first)
+			cs.first = i + 'A';
+		else if (chars[i] > 0 && !cs.second)
+			cs.second = i + 'A';
+	return cs;
+}
 
 int main() {
 	string s;
+	stringstream r;
 	cin >> s;
 
-	map<char, int> chars;
-	for (char c : s) {
-		if (chars.find(c) == chars.end())
-			chars[c] = 1;
-		else
-			chars[c]++;
-	}
-
-	set<Occurrence> occurrences;
-	for (auto [c, n] : chars)
-		occurrences.insert({ n, c });
+	for (char c : s)
+		chars[c - 'A']++;
 
 	char last_printed_char = 0;
 	for (size_t i = 0; i < s.size(); i++) {
-		auto least = chars.begin();
-		auto densest = occurrences.rbegin();
-		if (/* hay algun caracter que tengo que poner ahora porque sino no entra */) {
-			cout <<
-			/* actualizo la estructura que traquea eso */
-		}
-		if (last_printed_char != (*least).first) {
-			cout << (*least).first;
-			last_printed_char = (*least).first;
-			(*least).second--;
-			if ((*least).second == 0)
-				chars.erase(least);
-		} else {
-			auto next_least = next(least);
-			if (next_least == chars.end()) {
-				cout << -1;
-				break;
+		auto densest = calculate_densest();
+		auto chars_left = s.size() - i;
+		if (densest.second * 2 - 1 == chars_left) { // eg: A*A*A*A
+			if (last_printed_char == densest.first) {
+				cout << -1 << endl;
+				exit(0);
 			}
-			cout << (*next_least).first;
-			last_printed_char = (*next_least).first;
-			(*next_least).second--;
-			if ((*next_least).second == 0)
-				chars.erase(next_least);
+			r << densest.first;
+			last_printed_char = densest.first;
+			chars[densest.first - 'A']--;
+			continue;
+		}
+		auto smallest = calculate_two_smallest();
+		if (last_printed_char != smallest.first) {
+			r << smallest.first;
+			last_printed_char = smallest.first;
+			chars[smallest.first - 'A']--;
+		} else {
+			if (smallest.second == 0) {
+				cout << -1 << endl;
+				exit(0);
+			}
+			r << smallest.second;
+			last_printed_char = smallest.second;
+			chars[smallest.second - 'A']--;
 		}
 	}
-	cout << endl;
+	cout << r.str() << endl;
 }
